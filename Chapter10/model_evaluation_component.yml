@@ -1,0 +1,57 @@
+name: Winequality evaluation
+inputs:
+- {name: test_set, type: Dataset}
+- {name: rf_winequality_model, type: Model}
+- {name: thresholds_dict_str, type: String}
+outputs:
+- {name: metrics, type: ClassificationMetrics}
+- {name: kpi, type: Metrics}
+- {name: deploy, type: String}
+implementation:
+  container:
+    image: python:3.9
+    command:
+    - sh
+    - -c
+    - |2
+
+      if ! [ -x "$(command -v pip)" ]; then
+          python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+      fi
+
+      PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'pandas' 'scikit-learn' 'kfp==1.8.21' && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp -d)
+      printf "%s" "$0" > "$program_path/ephemeral_component.py"
+      python3 -m kfp.v2.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+    - "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing\
+      \ import *\n\ndef winequality_evaluation(\n    test_set:  Input[Dataset],\n\
+      \    rf_winequality_model: Input[Model],\n    thresholds_dict_str: str,\n  \
+      \  metrics: Output[ClassificationMetrics],\n    kpi: Output[Metrics]\n) -> NamedTuple(\"\
+      output\", [(\"deploy\", str)]):\n\n    from sklearn.ensemble import RandomForestClassifier\n\
+      \    import pandas as pd\n    import logging \n    import pickle\n    from sklearn.metrics\
+      \ import roc_curve, confusion_matrix, accuracy_score\n    import json\n    import\
+      \ typing\n\n    def threshold_check(val1, val2):\n        cond = \"false\"\n\
+      \        if val1 >= val2 :\n            cond = \"true\"\n        return cond\n\
+      \n    data = pd.read_csv(test_set.path+\".csv\")\n    model = RandomForestClassifier()\n\
+      \    file_name = rf_winequality_model.path + \".pkl\"\n    with open(file_name,\
+      \ 'rb') as file:  \n        model = pickle.load(file)\n\n    y_test = data.drop(columns=[\"\
+      target\"])\n    y_target=data.target\n    y_pred = model.predict(y_test)\n\n\
+      \    y_scores =  model.predict_proba(\n        data.drop(columns=[\"target\"\
+      ])\n    )[:, 1]\n    fpr, tpr, thresholds = roc_curve(\n         y_true=data.target.to_numpy(),\n\
+      \        y_score=y_scores, pos_label=True\n    )\n    metrics.log_roc_curve(\n\
+      \        fpr.tolist(), \n        tpr.tolist(), \n        thresholds.tolist()\n\
+      \    )  \n\n    metrics.log_confusion_matrix(\n       [\"False\", \"True\"],\n\
+      \       confusion_matrix(\n           data.target, y_pred\n       ).tolist(),\
+      \ \n    )\n\n    accuracy = accuracy_score(data.target, y_pred.round())\n  \
+      \  thresholds_dict = json.loads(thresholds_dict_str)\n    rf_winequality_model.metadata[\"\
+      accuracy\"] = float(accuracy)\n    kpi.log_metric(\"accuracy\", float(accuracy))\n\
+      \    deploy = threshold_check(float(accuracy), int(thresholds_dict['roc']))\n\
+      \    return (deploy,)\n\n"
+    args:
+    - --executor_input
+    - {executorInput: null}
+    - --function_to_execute
+    - winequality_evaluation

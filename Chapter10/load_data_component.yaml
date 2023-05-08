@@ -1,0 +1,41 @@
+name: Get wine data
+inputs:
+- {name: url, type: String}
+outputs:
+- {name: dataset_train, type: Dataset}
+- {name: dataset_test, type: Dataset}
+implementation:
+  container:
+    image: python:3.9
+    command:
+    - sh
+    - -c
+    - |2
+
+      if ! [ -x "$(command -v pip)" ]; then
+          python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+      fi
+
+      PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'pandas' 'pyarrow' 'scikit-learn==1.0.0' 'kfp==1.8.21' && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp -d)
+      printf "%s" "$0" > "$program_path/ephemeral_component.py"
+      python3 -m kfp.v2.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+    - "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing\
+      \ import *\n\ndef get_wine_data(\n    url: str,\n    dataset_train: Output[Dataset],\n\
+      \    dataset_test: Output[Dataset]\n):\n    import pandas as pd\n    import\
+      \ numpy as np\n    from sklearn.model_selection import train_test_split as tts\n\
+      \n    df_wine = pd.read_csv(url, delimiter=\";\")\n    df_wine['best_quality']\
+      \ = [1 if x>=7 else 0 for x in df_wine.quality] \n    df_wine['target'] = df_wine.best_quality\n\
+      \    df_wine = df_wine.drop(\n        ['quality', 'total sulfur dioxide', 'best_quality'],\n\
+      \         axis=1,\n    )\n    train, test = tts(df_wine, test_size=0.3)\n  \
+      \  train.to_csv(\n        dataset_train.path + \".csv\",\n        index=False,\
+      \ \n        encoding='utf-8-sig',\n    )\n    test.to_csv(\n        dataset_test.path\
+      \ + \".csv\",\n        index=False,\n        encoding='utf-8-sig',\n    )\n\n"
+    args:
+    - --executor_input
+    - {executorInput: null}
+    - --function_to_execute
+    - get_wine_data
