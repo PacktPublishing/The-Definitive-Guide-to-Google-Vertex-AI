@@ -1,0 +1,38 @@
+name: Train winequality
+inputs:
+- {name: dataset, type: Dataset}
+outputs:
+- {name: model, type: Model}
+implementation:
+  container:
+    image: python:3.9
+    command:
+    - sh
+    - -c
+    - |2
+
+      if ! [ -x "$(command -v pip)" ]; then
+          python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+      fi
+
+      PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'pandas' 'scikit-learn' 'kfp==1.8.21' && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp -d)
+      printf "%s" "$0" > "$program_path/ephemeral_component.py"
+      python3 -m kfp.v2.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+    - "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing\
+      \ import *\n\ndef train_winequality(\n    dataset:  Input[Dataset],\n    model:\
+      \ Output[Model], \n):\n    from sklearn.ensemble import RandomForestClassifier\n\
+      \    import pandas as pd\n    import pickle\n\n    data = pd.read_csv(dataset.path+\"\
+      .csv\")\n    model_rf = RandomForestClassifier(n_estimators=10)\n    model_rf.fit(\n\
+      \        data.drop(columns=[\"target\"]),\n        data.target,\n    )\n   \
+      \ model.metadata[\"framework\"] = \"RF\"\n    file_name = model.path + f\".pkl\"\
+      \n    with open(file_name, 'wb') as file:  \n        pickle.dump(model_rf, file)\n\
+      \n"
+    args:
+    - --executor_input
+    - {executorInput: null}
+    - --function_to_execute
+    - train_winequality

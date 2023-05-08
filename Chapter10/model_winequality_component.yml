@@ -1,0 +1,57 @@
+name: Deploy winequality
+inputs:
+- {name: model, type: Model}
+- {name: project, type: String}
+- {name: region, type: String}
+- {name: serving_container_image_uri, type: String}
+outputs:
+- {name: vertex_endpoint, type: Artifact}
+- {name: vertex_model, type: Model}
+implementation:
+  container:
+    image: python:3.9
+    command:
+    - sh
+    - -c
+    - |2
+
+      if ! [ -x "$(command -v pip)" ]; then
+          python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+      fi
+
+      PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-aiplatform' 'scikit-learn' 'kfp' 'kfp==1.8.21' && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp -d)
+      printf "%s" "$0" > "$program_path/ephemeral_component.py"
+      python3 -m kfp.v2.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+    - "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing\
+      \ import *\n\ndef deploy_winequality(\n    model: Input[Model],\n    project:\
+      \ str,\n    region: str,\n    serving_container_image_uri : str, \n    vertex_endpoint:\
+      \ Output[Artifact],\n    vertex_model: Output[Model]\n):\n    from google.cloud\
+      \ import aiplatform\n    aiplatform.init(project=project, location=region)\n\
+      \n    DISPLAY_NAME  = \"winequality\"\n    MODEL_NAME = \"winequality-rf\"\n\
+      \    ENDPOINT_NAME = \"winequality_endpoint\"\n\n    def create_endpoint():\n\
+      \        endpoints = aiplatform.Endpoint.list(\n        filter='display_name=\"\
+      {}\"'.format(ENDPOINT_NAME),\n        order_by='create_time desc',\n       \
+      \ project=project, \n        location=region,\n        )\n        if len(endpoints)\
+      \ > 0:\n            endpoint = endpoints[0]  # most recently created\n     \
+      \   else:\n            endpoint = aiplatform.Endpoint.create(\n            display_name=ENDPOINT_NAME,\
+      \ project=project, location=region\n        )\n    endpoint = create_endpoint()\
+      \   \n\n    #Import a model programmatically\n    model_upload = aiplatform.Model.upload(\n\
+      \        display_name = DISPLAY_NAME, \n        artifact_uri = model.uri.replace(\"\
+      model\", \"\"),\n        serving_container_image_uri =  serving_container_image_uri,\n\
+      \        serving_container_health_route=f\"/v1/models/{MODEL_NAME}\",\n    \
+      \    serving_container_predict_route=f\"/v1/models/{MODEL_NAME}:predict\",\n\
+      \        serving_container_environment_variables={\n        \"MODEL_NAME\":\
+      \ MODEL_NAME,\n    },       \n    )\n    model_deploy = model_upload.deploy(\n\
+      \        machine_type=\"n1-standard-4\", \n        endpoint=endpoint,\n    \
+      \    traffic_split={\"0\": 100},\n        deployed_model_display_name=DISPLAY_NAME,\n\
+      \    )\n\n    # Save data to the output params\n    vertex_model.uri = model_deploy.resource_name\n\
+      \n"
+    args:
+    - --executor_input
+    - {executorInput: null}
+    - --function_to_execute
+    - deploy_winequality
