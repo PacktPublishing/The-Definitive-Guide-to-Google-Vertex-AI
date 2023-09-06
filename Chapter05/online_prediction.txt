@@ -1,0 +1,22 @@
+
+gcloud auth application-default login
+
+ENDPOINT_ID="6808162805049458688"
+PROJECT_ID="gentle-bounty-343100"
+INPUT_DATA_FILE="INPUT-JSON"
+
+{
+  "instances": [
+    { "feature_column_a": "value", "feature_column_b": "value", ... },
+    { "feature_column_a": "value", "feature_column_b": "value", ... },
+    ...
+  ]
+}
+
+
+curl \
+-X POST \
+-H "Authorization: Bearer $(gcloud auth print-access-token)" \
+-H "Content-Type: application/json" \
+https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/endpoints/${ENDPOINT_ID}:predict \
+-d "@${INPUT_DATA_FILE}"

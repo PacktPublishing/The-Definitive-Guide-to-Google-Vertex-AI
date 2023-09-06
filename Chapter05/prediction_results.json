@@ -1,0 +1,28 @@
+{
+  "predictions": [
+    {
+      "scores": [
+        0.89472222328186035,
+        0.1052777245640755
+      ],
+      "classes": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "classes": [
+        "0",
+        "1"
+      ],
+      "scores": [
+        0.88255965709686279,
+        0.117440328001976
+      ]
+    }
+  ],
+  "deployedModelId": "3558930023110934528",
+  "model": "projects/217932574390/locations/us-central1/models/6845069012347387904",
+  "modelDisplayName": "hotel_cancellation_prediction",
+  "modelVersionId": "1"
+}
