@@ -1,4 +1,4 @@
-# Single, Mirror and Multi-Machine Distributed Training for CIFAR-10
+# Single, Mirror and Multi-Machine Distributed Training
 
 import tensorflow as tf
 import tensorflow
