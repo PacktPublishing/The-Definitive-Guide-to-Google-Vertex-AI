@@ -22,7 +22,6 @@ This book covers the following exciting features:
 
 If you feel this book is for you, get your [copy](https://www.amazon.in/Definitive-Guide-Google-Vertex-Implement/dp/1801815267/ref=sr_1_1?keywords=The+Definitive+Guide+to+Google+Vertex+AI&sr=8-1) today!
 
-<a href="https://www.packtpub.com/product/the-definitive-guide-to-google-vertex-ai/9781801815260"><img src="https://raw.githubusercontent.com/PacktPublishing/GitHub/master/GitHub.png" alt="https://www.packtpub.com/" border="5" /></a>
 
 ## Instructions and Navigations
 All of the code is organized into folders.
