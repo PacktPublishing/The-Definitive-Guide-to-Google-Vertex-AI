@@ -35,7 +35,7 @@ docker push "gcr.io/${PROJECT}/tf-custom:latest"
 
 **Following is what you need for this book:**
 If you are a machine learning practitioner who wants to learn end-to-end ML solution development on Google Cloud Platform using MLOps best practices and tools offered by Google Vertex AI, this is the book for you.
-With the following software and hardware list you can run all code files present in the book (Chapter 1-14).
+With the following software and hardware list you can run all code files present in the book (Chapter 1-17).
 
 ### Software and Hardware List
 
