@@ -1,6 +1,3 @@
-
-<b><p align='center'>[![Packt Sale](https://static.packt-cdn.com/assets/images/e72907cf-bf2f-4f83-bb58-6cc08a901ff9.jpeg)](https://www.packtpub.com/)</p></b>Get this book on sale at [Packt](https://www.packtpub.com/).
-
 # The Definitive Guide to Google Vertex AI
 
 <a href="https://www.packtpub.com/product/the-definitive-guide-to-google-vertex-ai/9781801815260"><img src="https://m.media-amazon.com/images/W/MEDIAX_792452-T2/images/I/717XwJehyKL._SL1500_.jpg" alt="The Definitive Guide to Google Vertex AI" height="256px" align="right"></a>
